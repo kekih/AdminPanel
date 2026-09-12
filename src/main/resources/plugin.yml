@@ -1,0 +1,42 @@
+name: AdminPanel
+version: '${version}'
+main: me.kekih.adminpanel.AdminPanel
+api-version: '26.2'
+authors: [kekih]
+description: Beautiful admin panel with player management and reports system
+website: https://github.com/kekih/AdminPanel
+
+commands:
+  apanel:
+    description: Open the admin panel
+    usage: /apanel
+    permission: adminpanel.use
+    aliases: [adminpanel, ap]
+  report:
+    description: Report a player
+    usage: /report <player> <reason>
+    permission: adminpanel.report
+    aliases: [rep]
+
+permissions:
+  adminpanel.use:
+    description: Allows using the admin panel
+    default: op
+  adminpanel.report:
+    description: Allows reporting players
+    default: true
+  adminpanel.ban:
+    description: Allows banning players from panel
+    default: op
+  adminpanel.kick:
+    description: Allows kicking players from panel
+    default: op
+  adminpanel.mute:
+    description: Allows muting players from panel
+    default: op
+  adminpanel.spectate:
+    description: Allows spectating players from panel
+    default: op
+  adminpanel.reports:
+    description: Allows viewing and managing reports
+    default: op
