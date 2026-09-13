@@ -10,6 +10,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
 public class InventoryListener implements Listener {
@@ -24,13 +26,25 @@ public class InventoryListener implements Listener {
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
-        InventoryHolder holder = event.getInventory().getHolder();
-        if (holder == null) return;
+        // Важно: проверяем ТОЛЬКО верхний инвентарь (наше меню)
+        Inventory top = event.getView().getTopInventory();
+        InventoryHolder holder = top.getHolder();
 
+        if (!(holder instanceof MainMenu
+                || holder instanceof PlayersMenu
+                || holder instanceof PlayerActionsMenu
+                || holder instanceof ReportsMenu)) {
+            return; // обычный инвентарь игрока — не трогаем
+        }
+
+        // Наше меню открыто — отменяем любые клики (включая нижний инвентарь)
         event.setCancelled(true);
 
+        // Обрабатываем только клики по верхнему инвентарю
         int slot = event.getRawSlot();
-        if (slot < 0) return;
+        if (slot < 0 || slot >= top.getSize()) {
+            return;
+        }
 
         if (holder instanceof MainMenu) {
             handleMainMenu(player, slot);
@@ -40,6 +54,19 @@ public class InventoryListener implements Listener {
             handleActionsMenu(player, actionsMenu, slot);
         } else if (holder instanceof ReportsMenu reportsMenu) {
             handleReportsMenu(player, reportsMenu, slot, event.getClick());
+        }
+    }
+
+    @EventHandler
+    public void onDrag(InventoryDragEvent event) {
+        if (!(event.getWhoClicked() instanceof Player)) return;
+
+        InventoryHolder holder = event.getView().getTopInventory().getHolder();
+        if (holder instanceof MainMenu
+                || holder instanceof PlayersMenu
+                || holder instanceof PlayerActionsMenu
+                || holder instanceof ReportsMenu) {
+            event.setCancelled(true);
         }
     }
 
@@ -84,6 +111,12 @@ public class InventoryListener implements Listener {
 
         if (slot == 22) { // Back
             new PlayersMenu().open(player);
+            return;
+        }
+
+        // Защита от действий над собой
+        if (target.equals(player)) {
+            player.sendMessage("§cНельзя применять это действие к себе!");
             return;
         }
 
@@ -135,10 +168,6 @@ public class InventoryListener implements Listener {
             case 16 -> { // Spectate
                 if (!player.hasPermission("adminpanel.spectate")) {
                     player.sendMessage("§cНет прав на слежку!");
-                    return;
-                }
-                if (target.equals(player)) {
-                    player.sendMessage("§cНельзя следить за собой!");
                     return;
                 }
                 player.closeInventory();
